@@ -1,0 +1,5 @@
+library(ChIPseeker)
+sink("tag_args.txt")
+print(names(formals(tagHeatmap)))
+print(names(formals(plotAvgProf)))
+sink()
