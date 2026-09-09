@@ -10,8 +10,7 @@ the artifacts of a completed run.
 
 This repository is a sanitized snapshot of a working research pipeline. Absolute paths and the
 originating HPC username have been replaced with placeholders, and directories holding raw
-sequencing data (FASTQ/BAM/BigWig) and unpublished project-specific metadata have been excluded —
-see [What's not here](#whats-not-here).
+sequencing data (FASTQ/BAM/BigWig) and unpublished project-specific metadata have been excluded.
 
 ## Architecture
 
@@ -39,13 +38,12 @@ Scripts/
 Skills/, Specialists/, AGENTS.md   # Agentic orchestration layer (see below)
 ```
 
-**Design principles carried through every step script:**
-- All paths are derived from `config.py` — nothing is hardcoded per-run.
-- Every step is idempotent and per-sample: one function submits one HPC batch job per sample,
-  writes its own `.batch`/`.log`/`.error` files, and can be re-run for just the failed samples.
-- Steps are pure data-flow — `step_N` consumes exactly what `step_N-1` produced, discoverable by
-  listing `Scripts/step_*.py` and reading `config.py` flags (`USE_TRIMMOMATIC`,
-  `IS_RAW_DATA_FASTQ`, etc.) to see which steps a given run needs.
+**Design principles**
+- Paths are derived from `config.py`.
+- Every step is per-sample and submits its own HPC batch job (`bsub`), writing its own
+  `.batch`/`.log`/`.error` files so a failed sample can be re-run in isolation.
+- `utils/ldsample.py` centralizes sample handling: it reads `Metadata/samples.txt`, resolves each
+  sample name to its FASTQ/BAM source file, and tracks sample/input-control pairings.
 
 ## Agentic orchestration layer
 
@@ -64,24 +62,6 @@ A dedicated skill (`skill_write_methods.md`) reconstructs a publication-ready Ma
 section — with correct tool versions, parameters, and citations — directly from the batch scripts,
 logs, and conda environment of a completed run, with an explicit zero-hallucination mandate: every
 parameter must be verified against what was actually executed, not assumed from a script default.
-
-## Tech stack
-
-Python (pandas, argparse-driven CLI steps) · R (DESeq2, edgeR, csaw, ChIPseeker, GenomicRanges) ·
-Bowtie2 · Trimmomatic · SAMtools/Sambamba/BEDTools · MACS3 · SEACR · deepTools · LSF (`bsub`) batch
-scheduling · Conda/mamba environment management
-
-## What's not here
-
-To protect unpublished data and the originating institution's infrastructure, this snapshot
-excludes:
-- `Analysis_Data/`, `Original_Data/`, `Importable_Data/`, `Metadata/` — all sequencing data
-  (FASTQ/BAM/BigWig) and real sample metadata/identifiers.
-- Per-run config artifacts (e.g. `pyGenomeTracks` `.ini` files) that embed absolute paths and
-  sample-level filenames.
-- A handful of one-off, non-pipeline analysis scripts tied to specific unpublished datasets.
-- Absolute filesystem paths and the HPC account username, replaced with placeholders
-  (`<your_username>`, `~/GG_EPICYPHER_CBX2`, `/path/to/reference/...`).
 
 ## Usage
 
